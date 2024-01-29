@@ -1,0 +1,200 @@
+;; 4.1 Run-time structure
+
+;; 4.1.1 Stores
+
+syntax store = STORE core_store instance_state* handle_inst * frame*
+
+;; 4.1.2 Components
+
+syntax instance_addr = U32
+
+syntax component_inst =
+  { STATE instance_addr,
+    PARENT component_inst,
+    CORE core_moduleinst,
+    CORE_MODULES core_module*,
+    CORE_INSTANCES core_moduleinst*,
+    COMPONENTS (gamma, component_inst, component),
+    INSTANCES component_inst*,
+    FUNCS core_funcinst*,
+    EXPORTS export_instr*,
+  }
+
+syntax instance_state =
+  { MAY_LEAVE bool,
+    MAY_ENTER bool,
+    HANDLES handle_table,
+  }
+
+syntax handle_table =
+  { LOCAL type_handle_table*,
+    IMPORTED type_handle_table*,
+  }
+
+syntax type_handle_table = handle_table_entry*
+
+;; temporary def
+syntax handle_addr = addr 
+
+syntax handle_inst =
+  { REP i32,
+    OWN bool,
+    LEND_COUNT i32,
+    INSTANCE instance_addr,
+    DTOR core_funcaddr,
+    FRAME frame_addr,
+  }
+
+syntax frame_addr = addr
+
+syntax frame = 
+  { OPT ???,
+    INST instance_addr,
+    LENDERS handle_addr*,
+    BORROWS i32,
+  }
+
+;; 4.1.3 Values
+
+syntax value_inst =
+  | BOOL bool
+  | UNSIGNED uXX
+  | SIGNED sXX
+  | FLOAT fXX
+  | CHAR uchar
+  | STRING string_inst
+  | LIST value_inst*
+  | RECORD record_field_inst*
+  | VARIANT variant_case_ins
+  | HANDLE handlr_addr
+
+syntax STRING_INST =
+  { CHARS uchar*,
+    CHOSE_UTF16 bool,
+  }
+
+;; 4.2 Components
+
+syntax import_env = name -> externval
+
+relation Reduce: context |- import_env, component_inst | store, component ~> store, component_inst
+
+var gamma : context
+var s : store
+var s' : store 
+var s_n : store
+var defs : definition*
+var component_inst_n : component_inst
+
+rule Reduce/component:
+  gamma |- import_env, component_inst | s, def ~> s_n, component_inst_n
+
+
+;; 4.2.1 Definitions
+
+relation Reduce_def: context |- import_env | store, component_inst, definition ~> store, component_inst
+
+
+;; Core Modules
+
+rule Reduce_def/core_module:
+  gamma |- import_env | s, component_inst, CORE_MODULE core_module ~> s, component_inst (+) { CORE_MODULES core_module } 
+
+
+;; Core Instances
+
+rule Reduce_def/core_inst_instantiate:
+  gamma |- import_env | s, component_inst, CORE_INSTANCE INSTANTIATE core_moduleidx core_instantiatearg* 
+  ~> s', component_inst (+) { CORE_INSTANCES core_moduleinst }
+  -- $core_module_instantiate(s, component_inst.CORE_MODULES[core_moduleidx], core_instantiatearg*) = (s', core_moduleinst)
+
+rule Reduce_def/core_inst_exports:
+  gamma |- import_env | s, component_inst, CORE_INSTANCE EXPORTS core_export*
+  ~> s, component_inst (+) { CORE_INSTANCES {component_inst}}
+
+
+;; Core Types
+
+rule Reduce_def/core_type:
+  gamma |- import_env | s, component_inst, CORE_TYPE core_deftype ~> s, component_inst
+
+
+;; Components
+
+rule Reduce_def/components:
+  gamma |- import_env | s, component_inst, COMPONENT component 
+  ~> s, component_inst (+) { COMPONENTS (gamma, component_inst, component) }
+
+
+;; Instances
+
+var component_inst' : component_inst
+var gamma' : context
+
+rule Reduce_def/instance_instantiate:
+  gamma |- impot_env | s, component_inst, INSTANCE INSTANTIATE componentidx instantiatearg*
+  ~> s', component_inst (+) { INSTNACES component_inst' }
+  -- if component_inst.COMPOENTS[componentidx] = (gamma', component_inst', component)
+
+;; todo : need relation here...
+
+
+rule Reduce_def/instance_exports:
+  gamma |- import_env | s, component_inst, INSTANCE EXPORTS exports*
+  ~> s, component_inst (+) { INSTANCES component_inst' }
+
+
+;; Aliases
+
+rule Reduce_def/alias:
+  gamma |- import_env | s, component_inst, ALIAS { SORT sort, TARGET EXPORT instanceidx name }
+  ~> s, component_inst (+) export_inst_i.value
+  -- if component_inst.INSTANCES[instanceidx].EXPORTS = export_inst_i*   
+  -- if export_inst_i.NAME = name
+
+rule Reduce_def/alias_core_export:
+  gamma |- import_env | s, component_inst, ALIAS { SORT sort, TARGET CORE_EXPORT instanceidx name}
+  ~> s, component_inst (+) { CORE component_inst.CORE (+) core_exportinst_i.value}    
+  -- if compponent_inst.CORE_INSTANCES[instnaceidx].EXPORTS = core_exportinst_i*
+  -- core_exportinst_i.NAME = name
+ 
+var u32_o : U32
+var u32_i : U32
+
+rule Reduce_def/alias_core_outer:
+  gamma |- import_env | s, component_inst, ALIAS { SORT sort, TARGET OUTER u32_o u32i }
+  ~> s, component_inst (+) { SORT $index_space(component_inst.PARENT[u32_o], sort)[u32_i] }
+
+
+;; Types
+
+rule Reduce_def/type:
+  gamma |- import_env | s, component_inst, TYPE deftype ~> s, component_inst
+
+
+;; Import
+
+rule Reduce_def/import:
+  gamma |- import_env | s, component_inst, IMPORT { NAME name, DESC externdesc } 
+  ~> s, component_inst (+) import_env(name)
+
+
+;; EXPORTS
+
+rule Reduce_def/export:
+  gamma |- import_env | s, compoent_inst, EXPORT { NAME name, DEF sortidx }
+  ~> s, component_inst (+) { EXPORTS { NAME name, VALUE component_inst[sortidx] } }
+
+;; todo : here something strange...
+
+
+
+;; Canon lift
+
+rule Reduce_def/lift:
+  gamma |- import_env | s, component_inst, LIFT core_funcidx 
+
+
+
+
+

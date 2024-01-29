@@ -1,0 +1,236 @@
+;; Names
+
+;; 2.2 Types
+
+;; 2.2.1. Value Types
+
+syntax primvaltype =
+  | BOOL | S8 | U8 | S16 | U16 | S32 | U32 | S64 | U64
+  | FLOAT32 | FLOAT64
+  | CHAR | STRING
+
+syntax defvaltype =
+  | PRIM primvaltype
+  | RECORD recordfield*
+  | VARIANT variantcase+
+  | LIST valtype
+  | TUPLE valtype*
+  | FLAGS name*
+  | ENUM name+
+  | UNION valtype+
+  | OPTION valtype
+  | RESULT valtype? valtype?
+  | OWN typeidx
+  | BORROW typeidx
+
+syntax valtype =
+  | primvaltype | defvaltype
+
+syntax recordfield =
+  { NAME name,
+    TYPE valtype }
+
+syntax variantcase = 
+  { NAME name,
+    TYPE valtype?,
+    REFINES u32? }
+
+;; 2.2.2 Resource Types
+
+syntax resourceytpe = 
+  { REP i32,
+    DTOR funcidx }
+
+;; 2.2.3 Function Types
+
+syntax functype = paramlist -> resultlist
+
+syntax paramlist =
+  { NAME name,
+    TYPE valtype }*
+
+syntax resultlist = 
+  | valtype
+  | { NAME name,
+      TYPE valtype }* 
+
+;; 2.2.4 Instance Types
+
+syntax instancetype = instancedecl*
+
+syntax instancedecl =
+  | ALIAS alias
+  | TYPE deftype
+  | EXPORT exportdecl
+
+syntax externdesc = 
+  | TYPE typebound
+  | CORE_MODULE core_typeidx
+  | FUNC typeidx
+  | INSTANCE typeidx
+  | COMPONENT typeidex
+
+syntax typebound =
+  | EQ typeidx
+  | SUBR
+
+syntax exportdecl =
+  { NAME name,
+    DESC externdesc }
+
+;; 2.2.5 Component Types
+
+syntax componenttype = componentdecl*
+
+syntax componentdecl = 
+  | instancedecl
+  | IMPORT importdecl
+
+syntax importdecl = 
+  { NAME name,
+    DESC externdesc }
+
+;; 2.2.6 Defined Types
+
+syntax deftype = 
+  | defvaltype
+  | resourceytpe
+  | functype
+  | componenttype
+  | instancetype
+
+;; 2.2.7 Core definition Types
+
+syntax core_deftype = 
+  | core_functype 
+  | core_moduletype
+
+syntax core_moduletype = core_moduledecl*
+
+syntax core_moduledecl =
+  | core_immportdecl
+  | core_deftype
+  | core_alias
+  | core_exportdecl
+
+syntax core_alias = 
+  { SORT core_sort,
+    TARGET core_aliastarget }
+
+syntax core_aliastarget = OUTER U32 U32
+
+syntax core_importdecl = core_import
+
+syntax core_exportdecl = 
+  { NAME name,
+    DESC core_importdesc }
+
+;; 2.3 Components
+
+;; 2.3.2 Sorts
+
+syntax core_sort = | func | table | memory | global | type | module | Instance
+
+syntax sort =
+  | CORE core_sort
+  | FUNC
+  | VALUE 
+  | TYPE 
+  | COMPONENT 
+  | INSTANCE
+
+;; 2.3.2 Indices
+
+syntax core_moduleidx = U32
+syntax core_instanceidx = U32
+syntax componentidx = U32
+syntax instanceidx = U32
+syntax funcidx = U32
+syntax core_funcidx = U32
+syntax typeidx = U32
+syntax core_typeidx = U32
+
+syntax core_sortidx = 
+  { SORT core_sort,
+    IDX U32 }
+
+syntax sortidx = 
+  { SORT sort,
+    IDX U32 }
+
+;; 2.3.3. Definitions
+
+syntax definition =
+  | CORE_MODULE core_module 
+  | CORE_INSTANCE core_instance
+  | CORE_TYPE core_type
+  | COMPONENT component
+  | INSTANCE instance
+  | ALIAS alias
+  | TYPE deftype
+  | CANON canon
+  | START start
+  | IMPORT import
+  | EXPORT export
+
+;; 2.3.4 Core Instances
+
+syntax core_instance =
+  | INSTANTIATE core_moduleidx core_instantiatearg
+  | EXPORTS core_export*
+
+syntax core_instantiatearg = 
+  { NAME name,
+    INSTANCE core_instaceidx }
+
+syntax core_export =
+  { NAME name,
+    DEF core_sortidx } 
+
+;; 2.3.5 Components
+
+syntax component = definition*
+
+;; 2.3.6 Instances
+
+syntax instance = 
+  | INSTANTIATE componentidx instantiatearg*
+  | EXPORTS export *
+
+syntax instantiatearg = 
+  { NAME name,
+    ARG sortidx }
+
+;; 2.3.7 Aliases
+
+syntax alias = ALIAS sort aliastarget
+
+syntax aliastarget =
+  | EXPORT instanceidx name
+  | CORE_EXPORT core_instanceidx name
+  | OUTER U32 U32
+
+;; 2.3.8 Canonical Definitions
+
+syntax canon =
+  | LIFT core_funcidx canonopt* typeidx
+  | LOWER funcidx canonopt*
+
+syntax canonopt =
+  | STRING_ENCODING_UTF8
+  | STRING_ENCODING_UTF16
+  | STRING_ENCODING_LATIN1+UTF16
+  | MEMORY core_memidx
+  | REALLOC core_funcidx
+  | POSTRETURN core_funcidx
+
+;; 2.3.10 Imports
+
+syntax import = importdecl
+
+;; 2.3.11 Exports
+
+syntax export = 
+  { NAME name, DEF sortidx }
+
+
