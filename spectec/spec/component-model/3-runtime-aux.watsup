@@ -1,0 +1,90 @@
+;;
+;; Auxiliary definitions
+;;
+
+;; 4. Execution
+
+;; 4.1 Run-time structure
+
+;; 4.2. Components
+
+;; length function ||x||
+;; todo : used in multiples contexts, should be polymorphic
+;; todo : link with infix notation || ||
+
+def $len(component_inst*) : u32
+def $len(eps) = 0
+def $len(component_inst component_inst*) = $length(component_inst*) + 1
+
+;; extend function (+) (U+2295) 
+;; extending records 
+;; todo : define correct sematnics
+;; todo : should be polymorphic for all records
+;; todo : link wiht infix notation x (+) y
+
+def $extend(store, store) : store
+
+;; core_module_instantiate function
+;; todo : refer to definintion in core Wasm SpecTec
+;; something like the following?
+
+def $core_module_instantiate(store, module, externval*) : config
+def $core_module_instantiate(store, module, externval*) = instantiate(store, module, externval*)
+
+;; index_space
+;; todo : this function polymorphically returns an object in multiple sorts
+;; todo : also should define each index space? 
+;; todo : another solution is to divide the rule for each sort
+
+def $index_space(sort, u32) : ??? 
+
+;; canon_lower_type
+;; gets an input component type, returns an output core type 
+;; todo : write semantics
+def $canon_lower_type(deftype) : core_deftype
+
+;; core_invoke
+;; similar to core_module_instantiate, defined in core Wasm SpecTecf
+;; todo : usage in spec (Canon resource.drop) is mismatching type (no val*)
+
+def $core_invoke(store, funcaddr, val*) : config
+def $core_invoke(store, funcaddr, val*) = i$invoke(store, funcaddr, val*)
+
+;; 4.3 conventions
+
+;; quote 
+;; the quasiquote notation
+
+def $quote(core:instr, store, core:moduleinst, locals) : store, core:moduleinst, locals, core:instr
+def $quote(core:instr, store, core:moduleinst, locals)= (store, core:moduleinst, locals, core:instr)
+
+;; unquote
+;; the quosiquote notation
+;; todo : clarify this
+
+def $unquote(???) : ???
+
+;; unquote with core:functype
+
+def $unquote_core_functype(???, core_functype) : ???
+
+;; unquote constant
+
+def $unquote_const(???, core:functype) : ???
+
+;; unquote value
+
+def $unquote_value(???, core:functype) : ???
+
+;; 4.4. Functions
+
+;; up
+;; todo : what is return type of this?
+
+def $up(functype, canonopt*, store, component_inst, core:funcidx) : ???
+
+;; down
+;; todo : what is return type of this?
+
+def $down(functype, canonopt*, store, component_inst, functype) : ???
+
