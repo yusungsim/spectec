@@ -1,0 +1,74 @@
+;; 4.1 Run-time structure
+
+;; 4.1.1 Stores
+
+syntax store = STORE core_store instance_state* handle_inst * frame*
+
+;; 4.1.2 Components
+
+syntax instance_addr = U32
+
+syntax component_inst =
+  { STATE instance_addr,
+    PARENT component_inst,
+    CORE core_moduleinst,
+    CORE_MODULES core_module*,
+    CORE_INSTANCES core_moduleinst*,
+    COMPONENTS (gamma, component_inst, component),
+    INSTANCES component_inst*,
+    FUNCS core_funcinst*,
+    EXPORTS export_instr*,
+  }
+
+syntax instance_state =
+  { MAY_LEAVE bool,
+    MAY_ENTER bool,
+    HANDLES handle_table,
+  }
+
+syntax handle_table =
+  { LOCAL type_handle_table*,
+    IMPORTED type_handle_table*,
+  }
+
+syntax type_handle_table = handle_table_entry*
+
+;; temporary def
+syntax handle_addr = addr 
+
+syntax handle_inst =
+  { REP i32,
+    OWN bool,
+    LEND_COUNT i32,
+    INSTANCE instance_addr,
+    DTOR core_funcaddr,
+    FRAME frame_addr,
+  }
+
+syntax frame_addr = addr
+
+syntax frame = 
+  { OPT ???,
+    INST instance_addr,
+    LENDERS handle_addr*,
+    BORROWS i32,
+  }
+
+;; 4.1.3 Values
+
+syntax value_inst =
+  | BOOL bool
+  | UNSIGNED uXX
+  | SIGNED sXX
+  | FLOAT fXX
+  | CHAR uchar
+  | STRING string_inst
+  | LIST value_inst*
+  | RECORD record_field_inst*
+  | VARIANT variant_case_ins
+  | HANDLE handlr_addr
+
+syntax STRING_INST =
+  { CHARS uchar*,
+    CHOSE_UTF16 bool,
+  }
