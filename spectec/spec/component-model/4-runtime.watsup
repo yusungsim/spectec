@@ -1,15 +1,15 @@
 ;; 4.2 Components
 
-syntax import_env = name -> externval
-
-relation Reduce: context |- import_env, component_inst | store, component ~> store, component_inst
-
 var gamma : context
 var s : store
 var s' : store 
 var s_n : store
 var defs : definition*
 var component_inst_n : component_inst
+
+syntax import_env = name -> externval
+
+relation Reduce: context |- import_env, component_inst | store, component ~> store, component_inst
 
 rule Reduce/component:
   gamma |- import_env, component_inst | s, def ~> s_n, component_inst_n
@@ -117,7 +117,43 @@ rule Reduce_def/export:
 ;; Canon lift
 
 rule Reduce_def/lift:
-  gamma |- import_env | s, component_inst, LIFT core_funcidx 
+  gamma |- import_env | s, component_inst, LIFT core_funcidx canonopt* typeidx 
+  ~> s'(+) { CORE_FUNCS 
+              { CORE_TYPE $canon_lower_type(gamma[funcidx], canonopt*), 
+                CORE_MODULE core_module,
+                CORE_CODE {CORE_LOCALS locals, CORE_BODY core_expr}
+              }
+            }, component_inst (+) {FUNCS ||S.core_funcs||}
+  -- s', core_module, locals, core_expr = $up(gamma[typeidx], canonopt*, s, component_inst, core_funcidx) 
 
+;; Canon lower
+
+rule Reduce_def/lower:
+  gamma |- import_env | s, component_inst, LOWER funcidx canonopt* typeidx 
+  ~> s'(+) { CORE_FUNCS 
+             { CORE_TYPE $canon_lower_type(gamma[funcidx], canonopt*), 
+               CORE_MODULE core_module,
+               CORE_CODE {CORE_LOCALS locals, CORE_BODY core_expr}
+             }
+           }, component_inst (+) {CORE_FUNCS ||S.core_funcs||} 
+  -- s', core_module, locals, core_expr = $down(gamma[funcidx], canonopt*, s, component_inst, funcidx)
+
+;; Canon resource.new
+
+rule Reduce_def/resource.new:
+  gamma |- component_inst, (RESOURCE.NEW typeidx)(i32)
+  ~> s', ||s.INSTANCES[component_inst.STATE].HANDLES[deftype_e]
+  -- deftype_e = gamma.TYPES[typeidx]
+  -- s' = s (+) {s.INSTANCES[component_inst.STATE].HANDLES[deftype_e] ||s.HANDLES||, HANDLES {REP i32, OWN TRUE}}
+
+;; Canon resource.drop
+;; todo : spec's rule seems to be errorneous...
+
+;; Canon resource.rep
+
+rule Reduce_def/resource.rep:
+  gamma |- s, component_inst, (RESOURCE.REP typeidx)(i32)
+  ~> s,
+  s.HANDLES[s.INSTANCES[component_inst.STATE].HANDLES[gamma.TYPES[typeidx]][i32]].REP
 
 

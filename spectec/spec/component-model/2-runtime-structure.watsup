@@ -2,11 +2,16 @@
 
 ;; 4.1.1 Stores
 
-syntax store = STORE core_store instance_state* handle_inst * frame*
+syntax store =
+  { CORE core_store,
+    INSTANCES instance_state*,
+    HANDLES handle_inst*,
+    FRAMES frame*
+  }
 
 ;; 4.1.2 Components
 
-syntax instance_addr = U32
+syntax instance_addr = addr
 
 syntax component_inst =
   { STATE instance_addr,
