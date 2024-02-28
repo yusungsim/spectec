@@ -49,6 +49,7 @@ In order to distinguish symbols of the textual syntax from symbols of the abstra
   (This is a shorthand for :math:`T^n` where :math:`n \leq 1`.)
 
 * :math:`x{:}T` denotes the same language as the nonterminal :math:`T`, but also binds the variable :math:`x` to the attribute synthesized for :math:`T`.
+  A pattern may also be used instead of a variable, e.g., :math:`(x,y){:}T`.
 
 * Productions are written :math:`\T{sym} ::= T_1 \Rightarrow A_1 ~|~ \dots ~|~ T_n \Rightarrow A_n`, where each :math:`A_i` is the attribute that is synthesized for :math:`\T{sym}` in the given case, usually from attribute variables bound in :math:`T_i`.
 
@@ -128,14 +129,18 @@ It is convenient to define identifier contexts as :ref:`records <notation-record
         & \IDATA & (\Tid^?)^\ast, \\
         & \ILOCALS & (\Tid^?)^\ast, \\
         & \ILABELS & (\Tid^?)^\ast, \\
-        & \ITYPEDEFS & \functype^\ast ~\} \\
+        & \IFIELDS & ((\Tid^?)^\ast)^\ast ~\} \\
+        & \ITYPEDEFS & \subtype^\ast ~\} \\
      \end{array}
    \end{array}
 
 For each index space, such a context contains the list of :ref:`identifiers <text-id>` assigned to the defined indices.
 Unnamed indices are associated with empty (:math:`\epsilon`) entries in these lists.
+Fields have *dependent* name spaces, and hence a separate list of field identifiers per type.
 
 An identifier context is *well-formed* if no index space contains duplicate identifiers.
+For fields, names need only be unique within a single type.
+
 
 
 Conventions
@@ -145,17 +150,17 @@ To avoid unnecessary clutter, empty components are omitted when writing out iden
 For example, the record :math:`\{\}` is shorthand for an :ref:`identifier context <text-context>` whose components are all empty.
 
 
-.. index:: vector
-   pair: text format; vector
-.. _text-vec:
+.. index:: list
+   pair: text format; list
+.. _text-list:
 
-Vectors
-~~~~~~~
+Lists
+~~~~~
 
-:ref:`Vectors <syntax-vec>` are written as plain sequences, but with a restriction on the length of these sequence.
+:ref:`Lists <syntax-list>` are written as plain sequences, but with a restriction on the length of these sequence.
 
 .. math::
    \begin{array}{llclll@{\qquad\qquad}l}
-   \production{vector} & \Tvec(\T{A}) &::=&
+   \production{list} & \Tlist(\T{A}) &::=&
      (x{:}\T{A})^n &\Rightarrow& x^n & (\iff n < 2^{32}) \\
    \end{array}

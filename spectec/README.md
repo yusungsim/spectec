@@ -135,7 +135,7 @@ Lowering from EL into IL infers additional information and makes it explicit in 
 
 ### Prerequisites
 
-You will need `ocaml` installed with `dune`, `menhir`, and `mdx` using `opam`.
+You will need `ocaml` installed with `dune`, `menhir`, `mdx`, and the `zarith` library using `opam`.
 
 * Install `opam` version 2.0.5 or higher.
   ```
@@ -146,12 +146,11 @@ You will need `ocaml` installed with `dune`, `menhir`, and `mdx` using `opam`.
 * Set `ocaml` as version 5.0.0 or higher.
   ```
   $ opam switch create 5.0.0
-  $ opam install dune menhir mdx
   ```
   
-* Install `dune` version 3.11.0, `menhir` version 20230608, and `mdx` version 2.3.1 via `opam` (default versions)
+* Install `dune` version 3.11.0, `menhir` version 20230608, `mdx` version 2.3.1, and `zarith` version 1.12, via `opam` (default versions)
   ```
-  $ opam install dune menhir mdx
+  $ opam install dune menhir mdx zarith
   ```
 
 ### Building the Project
@@ -233,21 +232,18 @@ Then, Sphinx builds the `rst` files into desired formats such as pdf or html.
 
 ## Running Interpreter Backend (WIP)
 
-The interpreter backend can be found in the [`al`](https://github.com/Wasm-DSL/spectec/tree/al) branch at the moment. It currently passes all tests in the official WebAssembly test suite.
+The interpreter backend can be found in the [`al`](https://github.com/Wasm-DSL/spectec/tree/al) branch at the moment.
 
-To run our interpreter backend against all of the official test suite,
+To run a wast file,
 ```
 $ git checkout al
 $ make
-$ ./watsup spec/* --animate --sideconditions --interpreter
+$ ./watsup spec/* --interpreter test-interpreter/sample.wast
 ```
 
-You may also run custom Wasm programs on our interpreter backend.
-
-This feature is yet under construction, as our interpreter accepts `wast` format programs only.
-For convenience, modify [test-interpreter/sample.wast](https://github.com/Wasm-DSL/spectec/blob/al/spectec/test-interpreter/sample.wast) as you like and run,
+You may also run all wast files in the directory.
 ```
 $ git checkout al
 $ make
-$ ./watsup spec/* --animate --sideconditions --interpreter --test-interpreter test-interpreter/sample
+$ ./watsup spec/* --interpreter ../test/core
 ```

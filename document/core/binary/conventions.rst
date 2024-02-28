@@ -54,6 +54,7 @@ In order to distinguish symbols of the binary syntax from symbols of the abstrac
   (This is a shorthand for :math:`B^n` where :math:`n \leq 1`.)
 
 * :math:`x{:}B` denotes the same language as the nonterminal :math:`B`, but also binds the variable :math:`x` to the attribute synthesized for :math:`B`.
+  A pattern may also be used instead of a variable, e.g., :math:`7{:}B`.
 
 * Productions are written :math:`\B{sym} ::= B_1 \Rightarrow A_1 ~|~ \dots ~|~ B_n \Rightarrow A_n`, where each :math:`A_i` is the attribute that is synthesized for :math:`\B{sym}` in the given case, usually from attribute variables bound in :math:`B_i`.
 
@@ -105,17 +106,17 @@ When dealing with binary encodings the following notation is also used:
 * :math:`||B||` is the length of the byte sequence generated from the production :math:`B` in a derivation.
 
 
-.. index:: vector
-   pair: binary format; vector
-.. _binary-vec:
+.. index:: list
+   pair: binary format; list
+.. _binary-list:
 
-Vectors
-~~~~~~~
+Lists
+~~~~~
 
-:ref:`Vectors <syntax-vec>` are encoded with their |Bu32| length followed by the encoding of their element sequence.
+:ref:`Lists <syntax-list>` are encoded with their |Bu32| length followed by the encoding of their element sequence.
 
 .. math::
    \begin{array}{llclll@{\qquad\qquad}l}
-   \production{vector} & \Bvec(\B{B}) &::=&
+   \production{list} & \Blist(\B{B}) &::=&
      n{:}\Bu32~~(x{:}\B{B})^n &\Rightarrow& x^n \\
    \end{array}

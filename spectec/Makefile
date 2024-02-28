@@ -2,6 +2,7 @@
 
 NAME = watsup
 EXT = $(NAME)
+LOG = _log
 
 
 # Main targets
@@ -18,13 +19,21 @@ ci: all
 EXE = exe-$(NAME)/main.exe
 SRCDIR = src
 OUTDIR = _build/default/src
+CLONEDIR = src/backend-interpreter/reference-interpreter
+CLONERM = dune-project jslib
+ROOTDIR = ..
 
 .PHONY: exe
 
-exe:
+exe: $(CLONEDIR)
 	rm -f ./$(NAME)
 	dune build $(SRCDIR)/$(EXE)
 	ln -f $(OUTDIR)/$(EXE) ./$(NAME)
+
+$(CLONEDIR):
+	cp -R $(ROOTDIR)/interpreter $(CLONEDIR)
+	rm -r $(CLONERM:%=$@/%)
+	cp $@/../dune-ref-interp $@/dune
 
 
 # Latex
@@ -41,14 +50,18 @@ TESTDIRS = $(shell ls -d test-*)
 
 .PHONY: test testpromote $(TESTDIRS)
 
-test: exe $(TESTDIRS)
-	@dune runtest && echo OK || (echo Failure. Run \`make testpromote\` to accept changes in test expectations. && false)
+test: exe $(TESTDIRS) dunetest
+
+dunetest:
+	@echo "#### Running (dune runtest)"
+	@dune runtest && echo OK || (echo "####>" Failure running dune test. && echo "####>" Run \`make testpromote\` to accept changes in test expectations. && false)
 
 testpromote:
 	dune promote
 
 $(TESTDIRS): test-%: exe
-	(cd $@ && make test >/dev/null)
+	@echo "#### Running (cd $@; make test)"
+	@(cd $@ && ((make test >$(LOG) 2>&1 && (grep warning $(LOG) || true)) || (cat $(LOG) && echo "####>" Failure running $@. See log above. && false)))
 
 
 # Cleanup
@@ -62,4 +75,5 @@ clean:
 
 distclean: clean
 	rm -f ./$(NAME)
+	rm -rf $(CLONEDIR)
 	for dir in $(TESTDIRS); do (cd $$dir && make distclean); done

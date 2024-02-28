@@ -31,11 +31,6 @@ let rec eq_iter iter1 iter2 =
 (* Types *)
 
 and eq_typ t1 t2 =
-  (*
-  Printf.printf "[eq] (%s) == (%s)  eq=%b\n%!"
-    (Print.string_of_typ t1) (Print.string_of_typ t2)
-    (t1.it = t2.it);
-  *)
   match t1.it, t2.it with
   | VarT (id1, args1), VarT (id2, args2) ->
     id1.it = id2.it && eq_list eq_arg args1 args2
@@ -44,22 +39,23 @@ and eq_typ t1 t2 =
   | IterT (t11, iter1), IterT (t21, iter2) ->
     eq_typ t11 t21 && eq_iter iter1 iter2
   | StrT tfs1, StrT tfs2 -> eq_nl_list eq_typfield tfs1 tfs2
-  | CaseT (dots11, ids1, tcs1, dots12), CaseT (dots21, ids2, tcs2, dots22) ->
-    dots11 = dots21 && eq_nl_list (=) ids1 ids2 &&
+  | CaseT (dots11, ts1, tcs1, dots12), CaseT (dots21, ts2, tcs2, dots22) ->
+    dots11 = dots21 && eq_nl_list eq_typ ts1 ts2 &&
     eq_nl_list eq_typcase tcs1 tcs2 && dots12 = dots22
   | RangeT tes1, RangeT tes2 -> eq_nl_list eq_typenum tes1 tes2
+  | AtomT atom1, AtomT atom2 -> atom1.it = atom2.it
   | SeqT ts1, SeqT ts2 -> eq_list eq_typ ts1 ts2
   | InfixT (t11, atom1, t12), InfixT (t21, atom2, t22) ->
-    eq_typ t11 t21 && atom1 = atom2 && eq_typ t12 t22
+    eq_typ t11 t21 && atom1.it = atom2.it && eq_typ t12 t22
   | BrackT (l1, t11, r1), BrackT (l2, t21, r2) ->
-    l1 = l2 && eq_typ t11 t21 && r1 = r2
+    l1.it = l2.it && eq_typ t11 t21 && r1.it = r2.it
   | _, _ -> t1.it = t2.it
 
 and eq_typfield (atom1, (t1, prems1), _) (atom2, (t2, prems2), _) =
-  atom1 = atom2 && eq_typ t1 t2 && eq_nl_list eq_prem prems1 prems2
+  atom1.it = atom2.it && eq_typ t1 t2 && eq_nl_list eq_prem prems1 prems2
 
 and eq_typcase (atom1, (t1, prems1), _) (atom2, (t2, prems2), _) =
-  atom1 = atom2 && eq_typ t1 t2 && eq_nl_list eq_prem prems1 prems2
+  atom1.it = atom2.it && eq_typ t1 t2 && eq_nl_list eq_prem prems1 prems2
 
 and eq_typenum (e1, eo1) (e2, eo2) =
   eq_exp e1 e2 && eq_opt eq_exp eo1 eo2
@@ -90,11 +86,12 @@ and eq_exp e1 e2 =
   | SeqE es1, SeqE es2
   | TupE es1, TupE es2 -> eq_list eq_exp es1 es2
   | StrE efs1, StrE efs2 -> eq_nl_list eq_expfield efs1 efs2
-  | DotE (e11, atom1), DotE (e21, atom2) -> eq_exp e11 e21 && atom1 = atom2
+  | DotE (e11, atom1), DotE (e21, atom2) -> eq_exp e11 e21 && atom1.it = atom2.it
+  | AtomE atom1, AtomE atom2 -> atom1.it = atom2.it
   | InfixE (e11, atom1, e12), InfixE (e21, atom2, e22) ->
-    eq_exp e11 e21 && atom1 = atom2 && eq_exp e12 e22
+    eq_exp e11 e21 && atom1.it = atom2.it && eq_exp e12 e22
   | BrackE (l1, e1, r1), BrackE (l2, e2, r2) ->
-    l1 = l2 && eq_exp e1 e2 && r1 = r2
+    l1.it = l2.it && eq_exp e1 e2 && r1.it = r2.it
   | CallE (id1, args1), CallE (id2, args2) ->
     id1.it = id2.it && eq_list eq_arg args1 args2
   | IterE (e11, iter1), IterE (e21, iter2) ->
@@ -104,7 +101,7 @@ and eq_exp e1 e2 =
   | _, _ -> e1.it = e2.it
 
 and eq_expfield (atom1, e1) (atom2, e2) =
-  atom1 = atom2 && eq_exp e1 e2
+  atom1.it = atom2.it && eq_exp e1 e2
 
 and eq_path p1 p2 =
   match p1.it, p2.it with
@@ -112,7 +109,7 @@ and eq_path p1 p2 =
   | IdxP (p11, e1), IdxP (p21, e2) -> eq_path p11 p21 && eq_exp e1 e2
   | SliceP (p11, e11, e12), SliceP (p21, e21, e22) ->
     eq_path p11 p21 && eq_exp e11 e21 && eq_exp e12 e22
-  | DotP (p11, atom1), DotP (p21, atom2) -> eq_path p11 p21 && atom1 = atom2
+  | DotP (p11, atom1), DotP (p21, atom2) -> eq_path p11 p21 && atom1.it = atom2.it
   | _, _ -> p1.it = p2.it
 
 
@@ -120,6 +117,7 @@ and eq_path p1 p2 =
 
 and eq_prem prem1 prem2 =
   match prem1.it, prem2.it with
+  | VarPr (id1, t1), VarPr (id2, t2) -> id1.it = id2.it && eq_typ t1 t2
   | RulePr (id1, e1), RulePr (id2, e2) -> id1.it = id2.it && eq_exp e1 e2
   | IfPr e1, IfPr e2 -> eq_exp e1 e2
   | IterPr (prem11, iter1), IterPr (prem21, iter2) ->
@@ -150,13 +148,13 @@ and eq_sym g1 g2 =
 and eq_arg a1 a2 =
   match !(a1.it), !(a2.it) with
   | ExpA e1, ExpA e2 -> eq_exp e1 e2
-  | SynA t1, SynA t2 -> eq_typ t1 t2
+  | TypA t1, TypA t2 -> eq_typ t1 t2
   | GramA g1, GramA g2 -> eq_sym g1 g2
   | _, _ -> false
 
 and eq_param p1 p2 =
   match p1.it, p2.it with
   | ExpP (id1, t1), ExpP (id2, t2) -> id1.it = id2.it && eq_typ t1 t2
-  | SynP id1, SynP id2 -> id1.it = id2.it
+  | TypP id1, TypP id2 -> id1.it = id2.it
   | GramP (id1, t1), GramP (id2, t2) -> id1.it = id2.it && eq_typ t1 t2
   | _, _ -> false
